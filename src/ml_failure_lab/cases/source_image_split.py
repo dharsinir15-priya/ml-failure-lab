@@ -89,22 +89,18 @@ def run() -> dict:
                 "approach": approach,
                 "train_images": len(train),
                 "test_images": len(test),
-                "overlapping_source_ids": len(
-                    overlapping_sources(train, test)
-                ),
+                "overlapping_source_ids": len(overlapping_sources(train, test)),
             }
         )
 
     return {
         "case": "source-image-split",
         "question": (
-            "Does this evaluation measure performance on previously "
-            "unseen source images?"
+            "Does this evaluation measure performance on previously unseen source images?"
         ),
         "measurements": measurements,
         "requirement": (
-            "Train and test source IDs must be disjoint when evaluating "
-            "new source images."
+            "Train and test source IDs must be disjoint when evaluating new source images."
         ),
         "interpretation": (
             "Randomly splitting augmented images can place different "
