@@ -13,18 +13,20 @@ class ImageSample:
 
 
 def samples() -> list[ImageSample]:
-    """Create small images and simple flipped augmentations."""
+    """Create asymmetric images and their flipped augmentations."""
     rows: list[ImageSample] = []
 
     for source_id in range(6):
         image = np.zeros((4, 4), dtype=np.uint8)
-        image[source_id % 4, :] = source_id + 1
+        image[0, 0] = source_id + 1
+        image[1, 2] = source_id + 2
+        image[3, 1] = source_id + 3
 
         rows.append(ImageSample(source_id, image, source_id % 2))
         rows.append(
             ImageSample(
                 source_id,
-                np.fliplr(image),
+                np.fliplr(image).copy(),
                 source_id % 2,
             )
         )
@@ -36,17 +38,27 @@ def random_row_split(
     rows: list[ImageSample],
 ) -> tuple[list[ImageSample], list[ImageSample]]:
     """Incorrectly split augmented rows independently."""
-    train = rows[::2]
-    test = rows[1::2]
+    rng = np.random.default_rng(42)
+    indices = rng.permutation(len(rows))
+    midpoint = len(rows) // 2
+
+    train = [rows[i] for i in indices[:midpoint]]
+    test = [rows[i] for i in indices[midpoint:]]
     return train, test
 
 
 def source_split(
     rows: list[ImageSample],
 ) -> tuple[list[ImageSample], list[ImageSample]]:
-    """Correctly keep every source entirely in one split."""
-    train = [row for row in rows if row.source_id < 4]
-    test = [row for row in rows if row.source_id >= 4]
+    """Keep all versions of each source in one split."""
+    source_ids = sorted({row.source_id for row in rows})
+    rng = np.random.default_rng(42)
+    shuffled_ids = rng.permutation(source_ids)
+    midpoint = len(shuffled_ids) // 2
+    train_ids = set(shuffled_ids[:midpoint].tolist())
+
+    train = [row for row in rows if row.source_id in train_ids]
+    test = [row for row in rows if row.source_id not in train_ids]
     return train, test
 
 
@@ -83,7 +95,6 @@ def run() -> dict:
         ("fixed", source_split),
     ]:
         train, test = split(samples())
-
         measurements.append(
             {
                 "approach": approach,
@@ -105,13 +116,11 @@ def run() -> dict:
         "interpretation": (
             "Randomly splitting augmented images can place different "
             "versions of the same source image in both splits. "
-            "Splitting by source ID keeps all versions of each source "
-            "together."
+            "Splitting by source ID keeps all versions of each source together."
         ),
         "limitation": (
             "This toy fixture demonstrates the split requirement only. "
-            "A corrected split does not necessarily produce a higher "
-            "evaluation score."
+            "A corrected split does not necessarily produce a higher evaluation score."
         ),
     }
 

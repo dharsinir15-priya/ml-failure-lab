@@ -56,10 +56,15 @@ def test_source_image_fixture_rejects_random_split_and_accepts_source_split():
     bad_train, bad_test = source_image_split.random_row_split(rows)
     fixed_train, fixed_test = source_image_split.source_split(rows)
 
+<<<<<<< HEAD
     # The random split must have shared source IDs.
     assert source_image_split.overlapping_sources(bad_train, bad_test) == {0, 1, 2, 3, 4, 5}
+=======
+    # The incorrect random split must expose source-image leakage.
+    assert source_image_split.overlapping_sources(bad_train, bad_test)
+>>>>>>> 3f20ca2 (Fix source image split review feedback)
 
-    # The corrected split must have no shared source IDs.
+    # The corrected split must keep source IDs disjoint.
     assert source_image_split.overlapping_sources(fixed_train, fixed_test) == set()
 
     # Reject the incorrect approach and accept the corrected one.
@@ -67,3 +72,23 @@ def test_source_image_fixture_rejects_random_split_and_accepts_source_split():
         source_image_split.verify("bad")
 
     source_image_split.verify("fixed")
+
+
+def test_random_row_split_is_reproducible():
+    rows = source_image_split.samples()
+
+    train1, test1 = source_image_split.random_row_split(rows)
+    train2, test2 = source_image_split.random_row_split(rows)
+
+    assert [row.source_id for row in train1] == [row.source_id for row in train2]
+    assert [row.source_id for row in test1] == [row.source_id for row in test2]
+
+
+def test_flipping_asymmetric_images_changes_them():
+    rows = source_image_split.samples()
+
+    for i in range(0, len(rows), 2):
+        original = rows[i].image
+        flipped = rows[i + 1].image
+
+        assert not (original == flipped).all()
