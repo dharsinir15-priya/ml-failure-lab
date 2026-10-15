@@ -32,6 +32,7 @@ def test_group_fixture_exposes_recognition_instead_of_new_entity_prediction():
 def test_selector_audit_tracks_actual_test_rows_in_fit_input(seed):
     bad, test_ids, bad_score = feature_selection.experiment("bad", seed)
     fixed, fixed_test_ids, fixed_score = feature_selection.experiment("fixed", seed)
+
     assert len(bad.fitted_rows & set(test_ids)) == 50
     assert not fixed.fitted_rows & set(fixed_test_ids)
     assert len(fixed.fitted_rows) == 150
@@ -43,6 +44,7 @@ def test_selector_audit_tracks_actual_test_rows_in_fit_input(seed):
 def test_minority_report_exposes_zero_detected_examples_without_changing_accuracy():
     bad = minority_recall.report("bad")
     fixed = minority_recall.report("fixed")
+
     assert bad["accuracy"] == fixed["accuracy"] == 0.99
     assert fixed["minority_recall"] == 0.0
     assert fixed["balanced_accuracy"] == 0.5
@@ -56,13 +58,8 @@ def test_source_image_fixture_rejects_random_split_and_accepts_source_split():
     bad_train, bad_test = source_image_split.random_row_split(rows)
     fixed_train, fixed_test = source_image_split.source_split(rows)
 
-<<<<<<< HEAD
-    # The random split must have shared source IDs.
-    assert source_image_split.overlapping_sources(bad_train, bad_test) == {0, 1, 2, 3, 4, 5}
-=======
     # The incorrect random split must expose source-image leakage.
     assert source_image_split.overlapping_sources(bad_train, bad_test)
->>>>>>> 3f20ca2 (Fix source image split review feedback)
 
     # The corrected split must keep source IDs disjoint.
     assert source_image_split.overlapping_sources(fixed_train, fixed_test) == set()
